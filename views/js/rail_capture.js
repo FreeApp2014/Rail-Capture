@@ -17,7 +17,7 @@ app.controller('configPage', function($scope) {
 		username: $scope.browser.i18n.getMessage('ui_options_label_username'),
 		password: $scope.browser.i18n.getMessage('ui_options_label_password'),
 		apiKey: $scope.browser.i18n.getMessage('ui_options_label_api_key'),
-		save: $scope.browser.i18n.getMessage('ui_options_button_save'),
+		save: $scope.browser.i18n.getMessage('ui_actions_save'),
 		messageHeader: $scope.browser.i18n.getMessage('ui_options_message_header'),
 		messageText: $scope.browser.i18n.getMessage('ui_options_message_text'),
 		menu: {
@@ -53,4 +53,69 @@ app.controller('configPage', function($scope) {
 	};
 
 	$scope.restore();
+});
+
+app.controller('editorPage', function($scope) {
+	$scope.browser = chrome || browser;
+	$scope.color = '#dd4535';
+	$scope.lineWidth = 10;
+	$scope.editor = new Editor({
+		renderDiv: 'editor',
+		defaults: {
+			color: $scope.color,
+			width: $scope.lineWidth,
+		},
+		height: 600,
+	});
+
+	$scope.saveColor = () => {
+		$scope.editor.setColor($scope.color);
+	};
+
+	$scope.saveLineWidth = () => {
+		$scope.editor.setLineWidth($scope.lineWidth);
+	};
+
+	$scope.translations = {
+		colorPlaceholder:  $scope.browser.i18n.getMessage('ui_editor_input_color'),
+		lineWidthPlaceholder:  $scope.browser.i18n.getMessage('ui_editor_input_linewidth'),
+		save: $scope.browser.i18n.getMessage('ui_actions_save'),
+		cancel: $scope.browser.i18n.getMessage('ui_actions_cancel'),
+	};
+
+	$scope.browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+		if(request.type = 'edit') $scope.editor.loadImageFromDataUri(request.data);
+
+		sendResponse({});
+	});
+	
+	$scope.save = () => {
+		$scope.browser.runtime.sendMessage({
+			type: 'save-img',
+			data: $scope.editor.toDataUri(),
+		}, response => {});
+		$scope.exit();
+	};
+
+	$scope.exit = () => {
+		window.close();
+	};
+
+	document.addEventListener('keydown', e => {
+		if (e.keyCode == 13) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			$scope.save();
+
+			return false
+		} else if (e.keyCode == 27) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			$scope.exit();
+
+			return false;
+		}
+	});
 });
